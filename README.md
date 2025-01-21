@@ -10,7 +10,7 @@ Insert gif or link to demo
 
 **Client:** littlefs (HTML, JS)
 
-**Server:** espressif8266
+**Server:** espressif8266 (C++)
 
 
 ## Optimizations
