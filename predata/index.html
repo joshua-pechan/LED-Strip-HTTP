@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Strip Website</title>
+</head>
+<style>
+    body { text-align: center; }
+    div { margin: auto;}
+</style>
+<body>
+    <h2>Hue</h2>
+    <input id="hueSlider" min="0" max="255" value="0" type="range">
+    <div id="colorDisplay" style="background-color: hsl(0, 100%, 50%); width: 200px; height: 200px;"></div> 
+
+    <h2>Increasing Hue</h2>
+    <input id="increasingHue" type="checkbox" style="transform: scale(1.5);">
+
+    <h2>Patterns</h2>
+    <button id="rainbow">Rainbow</button>
+    <button id="rainbowWithGlitter">Rainbow With Glitter</button>
+    <button id="confetti">Confetti</button>
+    <button id="sinelon">Sinelon</button>
+    <button id="bpm">bpm</button>
+    <button id="juggle">Juggle</button>
+</body>
+<script src="minified.js"></script>
+</html>
