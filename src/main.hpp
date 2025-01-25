@@ -14,6 +14,8 @@
 #define SSID "2812Agilny"
 #define PASSWORD "hailey123"
 
+#define DEBUG_LED 4
+
 // leds
 #define DATA_PIN 5
 #define LED_TYPE WS2811
@@ -26,6 +28,8 @@ extern CRGB leds[];
 
 extern std::string currentPattern;
 extern uint8_t hue;
+
+void wifiConnect();
 
 void rainbow();
 void rainbowWithGlitter();

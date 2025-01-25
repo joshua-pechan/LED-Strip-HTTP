@@ -24,6 +24,7 @@ std::map<std::string, std::function<void()>> functionMap = {
 };
 
 void setup() {
+  pinMode(4, OUTPUT);
   Serial.begin(115200);
   delay(3000);
 
@@ -65,11 +66,37 @@ void setup() {
 
   server.onNotFound([]() { server.send(404, "text/plain", "This is not found"); });
 
+  wifiConnect();
+
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.setBrightness(BRIGHTNESS);
+}
+
+void loop() { 
+  timer.tick();
+
+  if (functionMap.find(currentPattern) != functionMap.end()) {
+    functionMap[currentPattern]();
+  }
+
+  FastLED.show();
+  FastLED.delay(1000 / FRAMES_PER_SECOND);
+
+  // change color
+  if (increasingHue) { EVERY_N_MILLISECONDS(20) { hue++; } }
+}
+
+void wifiConnect() {
   wifiManager.connect([](wl_status_t status) {
     if (status != WL_CONNECTED) {
-      Serial.println("could not connect to wifi");
+      digitalWrite(DEBUG_LED, HIGH);
+      wifiManager.disconnect();
+      delay(500);
+      digitalWrite(DEBUG_LED, LOW);
+      wifiConnect();
       return;
     }
+    digitalWrite(DEBUG_LED, LOW);
 
     Serial.print("\nIP address: ");
     Serial.println(WiFi.localIP());
@@ -88,31 +115,4 @@ void setup() {
 
     Serial.println("HTTP server started");
   });
-
-  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.setBrightness(BRIGHTNESS);
 }
-
-void loop() { 
-  timer.tick();
-  
-  if (functionMap.find(currentPattern) != functionMap.end()) {
-    functionMap[currentPattern]();
-  }
-
-  FastLED.show();
-  FastLED.delay(1000 / FRAMES_PER_SECOND);
-
-  // change color
-  if (increasingHue) { EVERY_N_MILLISECONDS(20) { hue++; } }
-
-  // change pattern
-  // EVERY_N_SECONDS( 10 ) { nextPattern(); }
-}
-
-// #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
-
-// void nextPattern()
-// {
-//   currentPatternNumber = (currentPatternNumber + 1) % ARRAY_SIZE(patterns);
-// }
