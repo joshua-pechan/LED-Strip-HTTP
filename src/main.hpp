@@ -11,8 +11,8 @@
 #include <WiFiManager.hpp>
 
 // wifi
-#define SSID "2812Agilny"
-#define PASSWORD "hailey123"
+#define SSID ""
+#define PASSWORD ""
 
 #define DEBUG_LED 4
 
