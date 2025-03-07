@@ -3,7 +3,7 @@ Allows for pattern and hue changes for an LED strip with a simple interface on a
 
 ## Demo
 
-Insert gif or link to demo
+To be created
 
 
 ## Tech Stack
