@@ -11,8 +11,8 @@ WiFiManager wifiManager(&wifiMulti, &dispatcher, &timer, SSID, PASSWORD);
 CRGB leds[NUM_LEDS];
 std::string currentPattern = "rainbow";
 uint8_t hue = 0;
+uint8_t brightness = BRIGHTNESS;
 boolean increasingHue = false;
-boolean notConnected = true;
 
 std::map<std::string, std::function<void()>> functionMap = {
     {"rainbow", rainbow},
@@ -20,11 +20,12 @@ std::map<std::string, std::function<void()>> functionMap = {
     {"confetti", confetti},
     {"sinelon", sinelon},
     {"bpm", bpm},
-    {"juggle", juggle}
+    {"juggle", juggle},
+    {"solid", solid}
 };
 
 void setup() {
-  pinMode(4, OUTPUT);
+  pinMode(DEBUG_LED, OUTPUT);
   Serial.begin(115200);
   delay(3000);
 
@@ -35,44 +36,72 @@ void setup() {
 
   server.serveStatic("/", LittleFS, "/");
 
-  server.on("/", HTTPMethod::HTTP_POST, []() {
-    if (server.hasArg("plain")) {
-      String body = server.arg("plain");
-      
-      JsonDocument jsonDoc;
-      DeserializationError error = deserializeJson(jsonDoc, body);
-
-      if (error) {
-        server.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
-        return;
-      }
-
-      const int inputHue = jsonDoc["hue"];
-      if (inputHue != -1) { hue = inputHue; }
-
-      const boolean inputIncreasingHue = jsonDoc["increasingHue"];
-      increasingHue = inputIncreasingHue;
-
-      const char* inputPattern = jsonDoc["pattern"];
-      if (strcmp(inputPattern, "") != 0) { currentPattern = std::string(inputPattern); }
-
-      server.send(200, "text/plain", "Request processed successfully.");
-    } else {
-      server.send(400, "application/json", "{\"error\": \"No body received\"}");
-    }
-    
+  server.on("/state", HTTPMethod::HTTP_GET, []() {
+    JsonDocument jsonDoc;
+    jsonDoc["pattern"] = currentPattern.c_str();
+    jsonDoc["hue"] = hue;
+    jsonDoc["increasingHue"] = increasingHue;
+    jsonDoc["brightness"] = brightness;
+    String response;
+    serializeJson(jsonDoc, response);
+    server.send(200, "application/json", response);
     server.client().stop();
   });
 
-  server.onNotFound([]() { server.send(404, "text/plain", "This is not found"); });
+  server.on("/", HTTPMethod::HTTP_POST, []() {
+    if (!server.hasArg("plain")) {
+      server.send(400, "application/json", "{\"error\": \"No body received\"}");
+      server.client().stop();
+      return;
+    }
+
+    String body = server.arg("plain");
+    JsonDocument jsonDoc;
+    DeserializationError error = deserializeJson(jsonDoc, body);
+
+    if (error) {
+      server.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
+      server.client().stop();
+      return;
+    }
+
+    const int inputHue = jsonDoc["hue"] | -1;
+    if (inputHue >= 0 && inputHue <= 255) { hue = (uint8_t)inputHue; }
+
+    increasingHue = jsonDoc["increasingHue"] | false;
+
+    const int inputBrightness = jsonDoc["brightness"] | -1;
+    if (inputBrightness >= 0 && inputBrightness <= 255) {
+      brightness = (uint8_t)inputBrightness;
+      FastLED.setBrightness(brightness);
+    }
+
+    const char* inputPattern = jsonDoc["pattern"] | "";
+    if (strcmp(inputPattern, "") != 0) {
+      if (functionMap.find(std::string(inputPattern)) == functionMap.end()) {
+        server.send(400, "application/json", "{\"error\": \"Invalid pattern\"}");
+        server.client().stop();
+        return;
+      }
+      currentPattern = std::string(inputPattern);
+    }
+
+    server.send(200, "text/plain", "Request processed successfully.");
+    server.client().stop();
+  });
+
+  server.onNotFound([]() {
+    server.send(404, "text/plain", "Not found");
+    server.client().stop();
+  });
 
   wifiConnect();
 
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.setBrightness(BRIGHTNESS);
+  FastLED.setBrightness(brightness);
 }
 
-void loop() { 
+void loop() {
   timer.tick();
 
   if (functionMap.find(currentPattern) != functionMap.end()) {
@@ -82,7 +111,6 @@ void loop() {
   FastLED.show();
   FastLED.delay(1000 / FRAMES_PER_SECOND);
 
-  // change color
   if (increasingHue) { EVERY_N_MILLISECONDS(20) { hue++; } }
 }
 
@@ -106,7 +134,6 @@ void wifiConnect() {
     }
 
     server.begin();
-    LittleFS.begin();
 
     timer.setOnLoop([]() {
       server.handleClient();

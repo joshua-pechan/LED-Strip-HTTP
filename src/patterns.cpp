@@ -45,3 +45,7 @@ void juggle() {
         dothue += 32;
     }
 }
+
+void solid() {
+    fill_solid(leds, NUM_LEDS, CHSV(hue, 255, 255));
+}

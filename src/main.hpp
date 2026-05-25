@@ -11,8 +11,7 @@
 #include <WiFiManager.hpp>
 
 // wifi
-#define SSID ""
-#define PASSWORD ""
+#include "secrets.hpp"
 
 #define DEBUG_LED 4
 
@@ -38,3 +37,4 @@ void confetti();
 void sinelon();
 void bpm();
 void juggle();
+void solid();
